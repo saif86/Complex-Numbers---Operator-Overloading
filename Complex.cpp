@@ -1,17 +1,22 @@
-#include "Complex.h"
-#include <iostream>
-#include<string>
 #include<algorithm>
-
+#include<string>
+#include "Complex.h"  // class implemented
 using namespace std;
 
-Complex::Complex(double x, double y) :real(x), img(y){
+// File scope starts here 
 
+/////////////////////////////// PUBLIC ///////////////////////////////////////
+
+//============================= LIFECYCLE ====================================
+
+// Complex Default + Overloaded Constructor
+Complex::Complex(double aReal, double aImaginary) : mReal(aReal), mImaginary(aImaginary){
+	this->SetComplex(aReal, aImaginary);
 }
+// end Complex constructor
 
-Complex::Complex(const Complex &obj) : real(obj.getReal()), img(obj.getImaginary()) { }
-
-Complex::Complex(const string & aString) {
+// String Conversion Constructor
+Complex::Complex(const string& aString) {
 	int posPlus = aString.find("+");
 	int posMinus = aString.find("-");
 	int posSymbol = max(posPlus, posMinus);
@@ -19,15 +24,15 @@ Complex::Complex(const string & aString) {
 	int posJ = aString.find("j");
 	int posImSymbol = max(posI, posJ);
 	if (posSymbol == -1 || posImSymbol == -1) {
-		if (this->is_number(aString) && posImSymbol == -1)
-			this->setComplex(stod(aString));
-		else if (this->is_number(aString) && posImSymbol != -1)
-			this->setComplex(0,stod(aString));
+		if (this->Is_Number(aString) && posImSymbol == -1)
+			this->SetComplex(stod(aString));
+		else if (this->Is_Number(aString) && posImSymbol != -1)
+			this->SetComplex(0, stod(aString));
 		else {
 			cout << "Provided string cannot be converted to complex number. Setting string to zero." << endl;
-			this->setComplex();
+			this->SetComplex();
 		}
-		
+
 		return;
 	}
 	double realDouble = 1.0;
@@ -40,7 +45,7 @@ Complex::Complex(const string & aString) {
 			realDouble = -1.0;
 			posSymbol = aString.find_last_of("-");
 			posStart = aString.find_first_of("-");
-		}	
+		}
 	}
 	else {
 		if (posMinus != -1) {
@@ -48,238 +53,341 @@ Complex::Complex(const string & aString) {
 			posStart = aString.find_first_of("-");
 		}
 	}
-	string realString = aString.substr(posStart+1, posSymbol);
+	string realString = aString.substr(posStart + 1, posSymbol);
 	string gap = aString.substr(posSymbol + 1, posImSymbol - posSymbol + 1);
 	string imaginaryString;
-	if(this->is_number(gap))	// a + bi case
-		imaginaryString = aString.substr(posSymbol+1);
+	if (this->Is_Number(gap))	// a + bi case
+		imaginaryString = aString.substr(posSymbol + 1);
 	else			// a + ib case
 		imaginaryString = aString.substr(posImSymbol + 1);
-	if (this->is_number(realString))
+	if (this->Is_Number(realString))
 		realDouble *= stod(realString);
 	else
 		realDouble = 0.0;
 	imaginaryDouble *= stod(imaginaryString);
 
-	this->setComplex(realDouble, imaginaryDouble);
+	this->SetComplex(realDouble, imaginaryDouble);
 }
+// end Complex constructor
 
-void Complex::setReal(double aReal) {
-	this->real = aReal;
-}
-void Complex::setImaginary(double aImg) {
-	this->img = aImg;
-}
-void Complex::setComplex(double x, double y){
-	this->setReal(x);
-	this->setImaginary(y);
-}
-void Complex::setComplex(const Complex &obj) {
-	this->setComplex(obj.getReal(), obj.getImaginary());
-}
 
-double Complex::getReal()const {
-	return this->real;
+
+//============================= OPERATORS ====================================
+
+// Stream Insertion
+ostream& operator <<(ostream& rOs, const Complex& rFrom) {
+	rOs << "(" << rFrom.GetReal() << ") + (" << rFrom.GetImaginary() << ")i";
+		return rOs;
 }
-double Complex::getImaginary()const {
-	return this->img;
+// end stream insertion
+
+// Stream Extraction
+istream& operator >>(istream& rIs, Complex& rTo) {
+	int aReal, aImaginary;
+	cout << "Enter real part: ";
+	rIs >> aReal;
+	cout << "Enter imaganiary part: ";
+	rIs >> aImaginary;
+
+	rTo.SetComplex(aReal, aImaginary);
+
+	return rIs;
 }
-Complex Complex::getComplex()const {
+// end stream extraction
+
+// Addition operator
+Complex Complex::operator +(const Complex& rhs) {
+	Complex t = *this;
+	return t += rhs;
+}
+// end Addition operator
+
+// Overloaded addition operator
+Complex Complex::operator +(const double rhs) {
+	Complex t = *this;
+	return t += rhs;
+}
+// end Addition operator
+
+// Friend function to overloaded addition operator
+Complex operator +(const double lhs, const Complex& rhs) {
+	Complex t = rhs;
+	return t += lhs;
+}
+// end Addition operator
+
+// Addition assignment operator
+Complex& Complex::operator +=(const Complex& rhs) {
+	*this += rhs.GetReal();
+	this->SetImaginary(this->GetImaginary() + rhs.GetImaginary());
 	return *this;
 }
+// end addition assignment operator 
 
-Complex Complex::operator + (const Complex & rhs) {
-	Complex t(this->getComplex());
-	return (t += rhs);
+// Overloaded Addition assignment operator
+Complex& Complex::operator +=(const double rhs) {
+	this->SetReal(this->GetReal() + rhs);
+	
+	return *this;
 }
+// end addition assignment operator 
 
-Complex Complex::operator + (const double & rhs) {
-	Complex t(this->getComplex());
-	return (t += rhs);
+// Subtraction operator
+Complex Complex::operator -(const Complex& rhs) {
+	Complex t = *this;
+	return t -= rhs;
 }
+// end Subtraction operator
 
-Complex Complex::operator +=(const Complex & rhs) {
-	real += rhs.getReal();
-	img += rhs.getImaginary();
-	return this->getComplex();
+// Overloaded subtraction operator
+Complex Complex::operator -(const double rhs) {
+	Complex t = *this;
+	return t -= rhs;
 }
-Complex Complex::operator +=(const double & rhs) {
-	real += rhs;
-	return this->getComplex();
-}
-Complex Complex::operator -(const Complex & rhs) {
-	Complex t(this->getComplex());
-	return (t -= rhs);
-}
-Complex Complex::operator -(const double & rhs) {
-	Complex t(this->getComplex());
-	return (t -= rhs);
-}
+// end subtraction operator
 
-Complex Complex::operator -=(const Complex & rhs) {
-	real -= rhs.getReal();
-	img -= rhs.getImaginary();
-	return this->getComplex();
+// Friend function to overloaded subtraction operator
+Complex operator -(const double lhs, const Complex& rhs) {
+	Complex t = rhs;
+	t = -t;
+	return t += lhs;
 }
-Complex Complex::operator -=(const double & rhs) {
-	real -= rhs;
-	return this->getComplex();
-}
+// end subtraction operator
 
-Complex Complex::operator *(const Complex & rhs) {
-	Complex t(this->getComplex());
+// Subtraction assignment operator
+Complex& Complex::operator -=(const Complex& rhs) {
+	*this -= rhs.GetReal();
+	this->SetImaginary(this->GetImaginary() - rhs.GetImaginary());
+	return *this;
+}
+// end subtraction assignment operator 
+
+// Overloaded subtraction assignment operator
+Complex& Complex::operator -=(const double rhs) {
+	this->SetReal(this->GetReal() - rhs);
+
+	return *this;
+}
+// end subtraction assignment operator
+
+// Multiplication operator
+Complex Complex::operator *(const Complex& rhs) {
+	Complex t(this->GetComplex());
 	return (t *= rhs);
 }
-Complex Complex::operator *(const double & rhs) {
-	Complex t(this->getComplex());
+// end multiplication operator
+
+// Overloaded multiplication operator
+Complex Complex::operator *(const double rhs) {
+	Complex t(this->GetComplex());
 	return (t *= rhs);
 }
+// end multiplication operator
 
-Complex Complex::operator *=(const Complex & rhs) {
-	Complex t;
-	t.setReal(this->getReal()*rhs.getReal() - this->getImaginary()*rhs.getImaginary());
-	t.setImaginary(this->getReal()*rhs.getImaginary()+this->getImaginary()*rhs.getReal());
-	this->setComplex(t);
-	return this->getComplex();
-}
-Complex Complex::operator *=(const double & rhs) {
-	real *= rhs;
-	img *= rhs;
-	return this->getComplex();
-}
-
-Complex Complex::operator /(const Complex & rhs) {
-	Complex t(this->getComplex());
-	return (t /= rhs);
-}
-Complex Complex::operator /(const double & rhs) {
-	Complex t(this->getComplex());
-	return (t /= rhs);
-}
-
-Complex Complex::operator /=(const Complex & rhs) {
-	Complex nmrtr, dnmntr, cnjgt = *rhs.getComplex();
-	double dDenom;
-	nmrtr = this->getComplex() * cnjgt;
-	dnmntr = cnjgt * rhs;
-	dDenom = (double)dnmntr;
-	*this = nmrtr / dDenom;
-	return this->getComplex();
-}
-Complex Complex::operator /=(const double & rhs) {
-	real /= rhs;
-	img /= rhs;
-	return this->getComplex();
-}
-
-
-bool Complex::is_number(const string& s)
-{
-	try
-	{
-		std::stod(s);
-	}
-	catch (...)
-	{
-		return false;
-	}
-	return true;
-}
-
-bool Complex::operator == (const Complex & c)
-{
-	if ((this->getReal() == c.getReal()) && (this->getImaginary() == c.getImaginary())){
-		return true;
-	}
-	else
-		return false;
-}
-bool Complex::operator != (const Complex & c)
-{
-	if (this->getImaginary() == c.getImaginary()){
-		return false;
-	}
-	else
-		return true;
-}
-
-
-Complex Complex::operator -(){
-	Complex temp(-this->getReal(), -this->getImaginary());
-	return temp;
-}
-
-Complex Complex::operator * () {
-	Complex t(this->getReal(), -this->getImaginary());
-	return t;
-}
-
-Complex & Complex::operator++(){
-	this->real++;
-	return *this;
-}
-
-Complex Complex::operator ++(int){
-	Complex t = this->getComplex();
-	this->real++;
-	return t;
-}
-Complex & Complex::operator --() {
-	this->real--;
-	return *this;
-}
-
-Complex Complex::operator --(int) {
-	Complex t = this->getComplex();
-	this->real--;
-	return t;
-}
-
-Complex::operator double(){
-	return this->getReal();
-}
-Complex operator +(const double & lhs, const Complex & rhs) {
-	Complex t;
-	t.setReal(lhs + rhs.getReal());
-	t.setImaginary(rhs.getImaginary());
-	return t;
-}
-
-Complex operator -(const double & lhs, const Complex & rhs) {
-	Complex t;
-	t.setReal(lhs - rhs.getReal());
-	t.setImaginary(-rhs.getImaginary());
-	return t;
-}
-
-Complex operator *(const double & lhs, const Complex & rhs) {
+// Friend function to overloaded multiplication operator
+Complex operator *(const double lhs, const Complex& rhs) {
 	Complex t = rhs;
 	return t *= lhs;
 }
+// end multiplication operator
 
-Complex operator /(const double & lhs, const Complex & rhs) {
-	Complex nmrtr, dnmntr, cnjgt =*rhs.getComplex();
+// Multiplication assignment operator
+Complex& Complex::operator *=(const Complex& rhs) {
+	this->SetComplex(this->GetReal()*rhs.GetReal() - this->GetImaginary()*rhs.GetImaginary(), this->GetReal()*rhs.GetImaginary() + this->GetImaginary()*rhs.GetReal());
+	return *this;
+}
+// end multiplication assignment operator 
+
+// Overloaded multiplication assignment operator
+Complex& Complex::operator *=(const double rhs) {
+	this->SetComplex(this->GetReal()*rhs, this->GetImaginary()*rhs);
+	
+	return *this;
+}
+// end multiplication assignment operator
+
+// Division operator
+Complex Complex::operator /(const Complex& rhs) {
+	Complex t(this->GetComplex());
+	
+	return (t /= rhs);
+}
+// end division operator
+
+// Overloaded division operator
+Complex Complex::operator /(const double rhs) {
+	Complex t(this->GetComplex());
+	
+	return (t /= rhs);
+}
+// end division operator
+
+// Friend function to overloaded division operator
+Complex operator /(const double lhs, const Complex& rhs) {
+	Complex t;
+	t =(Complex)lhs;
+	
+	return (t /= rhs);
+}
+// end division operator
+
+// Division assignment operator
+Complex& Complex::operator /=(const Complex& rhs) {
+	Complex nmrtr, dnmntr, cnjgt = rhs;
+	cnjgt = *cnjgt;
 	double dDenom;
-	nmrtr = cnjgt * lhs;
+	nmrtr = this->GetComplex(); 
+	nmrtr*=cnjgt;
 	dnmntr = cnjgt * rhs;
 	dDenom = (double)dnmntr;
-	return nmrtr / dDenom;
+	this->SetComplex(nmrtr / dDenom);
+	return *this;
+}
+// end division assignment operator 
+
+// Overloaded division assignment operator
+Complex& Complex::operator /=(const double rhs) {
+	this->SetComplex(this->GetReal() / rhs, this->GetImaginary() / rhs);
+	
+	return *this;
 }
 
-ostream & operator <<(ostream & os, const Complex & c)
+// end division assignment operator
+
+// Equality operator
+bool Complex::operator == (const Complex& rhs) {
+	if ((this->GetReal() == rhs.GetReal()) && (this->GetImaginary() == rhs.GetImaginary())) {
+		return true;
+	}
+	else
+		return false;
+}
+// end equality operator
+
+// Non-Equality operator
+bool Complex::operator != (const Complex& rhs)
 {
-	os << "(" << c.real << ") + (" << c.img << ")i";
-	return os;
+	if (*this == rhs)
+		return false;
+	else
+		return true;
 }
+// end non-Equality operator
 
-istream & operator >>(istream & is, Complex & c)
-{
-	cout << "Enter real part: ";
-	is >> c.real;
-	cout << "Enter imaganiary part: ";
-	is >> c.img;
-
-	return is;
+// Negation operator
+Complex Complex::operator -() {
+	Complex temp(-this->GetReal(), -this->GetImaginary());
+	return temp;
 }
+//end negation operator
+
+// Conjugate operator
+Complex Complex::operator *() {
+	Complex t(this->GetReal(), -this->GetImaginary());
+	return t;
+}
+//end conjugate operator
+
+// pre-increment operator
+Complex& Complex::operator++() {
+	*this += 1;
+	return *this;
+}
+// end pre-increment operator
+
+// post-increment operator
+Complex Complex::operator ++(int) {
+	Complex t = *this;
+	*this += 1;
+	return t;
+}
+// end post-increment operator
+
+// pre-decrement operator
+Complex& Complex::operator --() {
+	*this -= 1;
+	return *this;
+}
+// end pre-decrement operator
+
+// post-decrement operator
+Complex Complex::operator --(int) {
+	Complex t = *this;
+	*this -= 1;
+	return t;
+}
+// end post-decrement operator
+
+// Function operator to overload float
+Complex::operator double() {
+	return this->GetReal();
+}
+// end function operator
 
 
+
+//============================= ACESS      ===================================
+
+// function that sets real part of complex number
+void Complex::SetReal(double aReal) {
+	this->mReal = aReal;
+}
+// end function SetReal
+
+// function that sets imaginary part of complex number
+void Complex::SetImaginary(double aImaginary) {
+	this->mImaginary = aImaginary;
+}
+// end function SetImaginary
+
+// function that sets the Complex number
+void Complex::SetComplex(double aReal, double aImaginary) {
+	this->SetReal(aReal);
+	this->SetImaginary(aImaginary);
+}
+// end function SetComplex
+
+// overloaded function that sets the Complex number
+void Complex::SetComplex(const Complex& rComplex) {
+	this->SetComplex(rComplex.GetReal(), rComplex.GetImaginary());
+}
+// end function SetComplex
+
+// function that gets real part of complex number
+double Complex::GetReal()const {
+	return this->mReal;
+}
+// end function GetReal
+
+// function that gets imaginary part of complex number
+double Complex::GetImaginary()const {
+	return this->mImaginary;
+}
+// end function GetImaginary
+
+// function that gets the Complex number
+const Complex& Complex::GetComplex()const {
+	return *this;
+}
+// end function GetComplex
+
+
+/////////////////////////////// PRIVATE    ///////////////////////////////////
+
+/** utility function to check for leap year.
+*
+* @param testNumber The string to be tested for numbers.
+*
+* @return true if testNumber is numeric, false otherwise.
+*/
+bool Complex::Is_Number(const string& testNumber) {
+
+	try{
+		std::stod(testNumber);
+	}
+	catch (...){
+		return false;
+	}
+
+	return true;
+}
